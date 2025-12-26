@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>НЕ ОБОРАЧИВАЙСЯ</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; font-family: Arial, sans-serif;
+  background:#000; color:#e6e6e6; min-height:100vh;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+}
+.wrap{
+  width:92%; max-width:520px; background:rgba(0,0,0,.85);
+  border-radius:18px; padding:22px; position:relative;
+  box-shadow:0 30px 80px rgba(0,0,0,.9);
+}
+.noise{position:absolute; inset:0; pointer-events:none;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 2px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, transparent 1px 2px);
+  mix-blend-mode:overlay; animation:flicker 2.2s infinite}
+@keyframes flicker{0%,100%{opacity:.12}50%{opacity:.25}}
+h1{letter-spacing:3px; text-align:center; margin:4px 0}
+.sub{opacity:.8; text-align:center}
+.screen{
+  margin:14px 0; padding:14px; min-height:140px;
+  border-radius:12px; background:#050505; border:1px solid #1f1f1f;
+  font-family:monospace; line-height:1.35; position:relative;
+}
+.blink::after{content:'▌'; animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.actions{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+button{
+  background:#0b0b0b; color:#e6e6e6; border:1px solid #2a2a2a;
+  border-radius:12px; padding:12px; font-weight:800; cursor:pointer
+}
+button:hover{background:#111}
+.danger{border-color:#7a1111; color:#ffb3b3}
+.safe{border-color:#145c2a; color:#b9ffd5}
+.timer{margin-top:10px; text-align:center; font-size:14px; opacity:.8}
+.overlay{
+  position:fixed; inset:0; background:#000; display:none;
+  align-items:center; justify-content:center; z-index:5
+}
+.overlay.show{display:flex}
+.overlay h2{color:#fff; letter-spacing:4px}
+.footer{margin-top:12px; font-size:12px; opacity:.6; text-align:center}
+/* glitch */
+.glitch{animation:glitch .25s 2}
+@keyframes glitch{
+  0%{transform:translate(0)}
+  25%{transform:translate(-2px,1px)}
+  50%{transform:translate(2px,-1px)}
+  75%{transform:translate(-1px,2px)}
+  100%{transform:translate(0)}
+}
+</style>
+</head>
+<body>
+<div class="overlay" id="scr"><h2>НЕ СМОТРИ</h2></div>
+<div class="wrap" id="wrap">
+  <div class="noise"></div>
+  <h1>НЕ ОБОРАЧИВАЙСЯ</h1>
+  <div class="sub">кто-то рядом</div>
+  <div id="screen" class="screen blink"></div>
+  <div class="actions">
+    <button class="danger" onclick="next()">ПРОДОЛЖИТЬ</button>
+    <button onclick="look()">ПОСМОТРЕТЬ</button>
+    <button class="safe" onclick="escape()">ВЫЙТИ</button>
+    <button onclick="resetAll()">СБРОС</button>
+  </div>
+  <div class="timer">Таймер: <span id="t">30</span> сек.</div>
+  <div class="footer">Хоррор‑демо. Ничего не записывается.</div>
+</div>
+
+<script>
+const scenes=[
+ 'Соединение установлено…\nШум усиливается.',
+ 'Ты слышишь шаги. Они ближе.',
+ 'Экран мигает. Кто-то печатает вместе с тобой.',
+ 'Не нажимай «Посмотреть».',
+ 'Поздно.'
+];
+let i=0, time=30, tick;
+const screen=document.getElementById('screen');
+const tEl=document.getElementById('t');
+const scr=document.getElementById('scr');
+const wrap=document.getElementById('wrap');
+
+function beep(freq=440, dur=80){
+  const a=new (window.AudioContext||window.webkitAudioContext)();
+  const o=a.createOscillator(); const g=a.createGain();
+  o.frequency.value=freq; o.connect(g); g.connect(a.destination);
+  o.start(); g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime+dur/1000);
+}
+
+function typeText(text){
+  screen.textContent=''; screen.classList.add('blink');
+  let k=0; const it=setInterval(()=>{
+    screen.textContent+=text[k++]||'';
+    if(k>text.length){clearInterval(it); screen.classList.remove('blink');}
+  },22);
+}
+
+function flash(){
+  document.body.animate([{backgroundColor:'#300'},{backgroundColor:'#000'}],{duration:160});
+  wrap.classList.add('glitch'); setTimeout(()=>wrap.classList.remove('glitch'),300);
+}
+
+function next(){ typeText(scenes[Math.min(i++, scenes.length-1)]); flash(); beep(520); }
+function look(){
+  typeText('Ты смотришь…\nТам темно.\nИ кто-то смотрит в ответ.');
+  scr.classList.add('show'); setTimeout(()=>scr.classList.remove('show'),600);
+  flash(); beep(180,120);
+}
+function escape(){ typeText('Выход найден.\nЗакрой страницу сейчас.'); clearInterval(tick); }
+function resetAll(){
+  i=0; time=30; tEl.textContent=time;
+  typeText('Система активна.\nОжидание…');
+  clearInterval(tick);
+  tick=setInterval(()=>{
+    time--; tEl.textContent=time;
+    if(time<=0){ clearInterval(tick); look(); }
+  },1000);
+}
+resetAll();
+</script>
+</body>
+</html>
